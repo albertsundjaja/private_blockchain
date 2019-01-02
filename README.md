@@ -5,6 +5,12 @@ Blockchain has the potential to change the way that the world approaches data. D
 
 ### Configuring your project
 
+- Clone the project
+
+```
+git clone https://github.com/albertsundjaja/private_blockchain.git
+```
+
 - Use NPM to initialize your project and create package.json to store project dependencies.
 ```
 npm init
