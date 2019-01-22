@@ -50,7 +50,7 @@ class Blockchain {
                     newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
                     // save block to level db
                     addLevelDBData(newBlock.height, newBlock);
-                    resolve(("Block height %s has been added").replace("%s", newBlock.height));
+                    resolve(newBlock);
                 }).catch((err) => {
                     console.log("error getting block", err);
                     reject("Adding block failed");
