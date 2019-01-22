@@ -36,6 +36,10 @@ node check.js
 
 this project uses `Express.js` as router
 
+### Running the API server
+
+go to the project folder and run `node router.js`
+
 ## API Endpoint
 
 ### GET /block/:block_height
