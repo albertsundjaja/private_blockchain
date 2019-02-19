@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bitcoinjs-message": "^2.0.0",
     "body-parser": "^1.18.3",
     "express": "^4.16.4",
     "level": "^4.0.0"
