@@ -17,6 +17,10 @@ app.post('/message-signature/validate', handler.HandlerValidateSignature_POST);
 
 app.post('/block', handler.HandlerStarBlock_POST);
 
+app.get('/stars/address:address', handler.HandlerStarLookupAddress_GET);
+
+app.get('/stars/hash:hash', handler.HandlerStarLookupHash_GET);
+
 app.listen(8000, () => console.log('Example app listening on port 8000!'));
 
 

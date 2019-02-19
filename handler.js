@@ -240,12 +240,72 @@ HandlerStarBlock_POST = (req, res) => {
 
 };
 
+HandlerStarLookupHash_GET = (req, res) => {
+    let hash = req.params.hash;
+    if (!hash) {
+        res.status(400);
+        res.json(paramErr);
+        return;
+    }
+
+    // remove the leading :
+    hash = hash.substring(1);
+
+    blockchain.getBlockStarHash(hash)
+        .then((block) => {
+            res.status(200);
+            res.json(block);
+        })
+        .catch((err)=> {
+            // tell user that address cant be found
+            if (err === myChain.errHashNotFound) {
+                res.status(409);
+                res.json(err);
+                return;
+            }
+
+            res.status(500);
+            res.json(internalErr);
+        });
+};
+
+HandlerStarLookupAddress_GET = (req, res) => {
+    let address = req.params.address;
+    if (!address) {
+        res.status(400);
+        res.json(paramErr);
+        return;
+    }
+
+    // remove the starting :
+    address = address.substring(1);
+
+    blockchain.getBlockStarAddress(address)
+        .then((block) => {
+            res.status(200);
+            res.json(block);
+        })
+        .catch( (err)=> {
+            // tell user that address cant be found
+            if (err === myChain.errAddrNotFound) {
+                res.status(409);
+                res.json(err);
+                return;
+            }
+
+            res.status(500);
+            res.json(internalErr);
+        });
+};
+
 module.exports = {
     HandlerBlock_GET: HandlerBlock_GET,
     HandlerBlock_POST: HandlerBlock_POST,
     HandlerValidationRequest_POST: HandlerValidationRequest_POST,
     HandlerValidateSignature_POST: HandlerValidateSignature_POST,
-    HandlerStarBlock_POST: HandlerStarBlock_POST
+    HandlerStarBlock_POST: HandlerStarBlock_POST,
+    HandlerStarLookupHash_GET: HandlerStarLookupHash_GET,
+    HandlerStarLookupAddress_GET: HandlerStarLookupAddress_GET
 };
 
 // when address has been validated, should validation window reset?

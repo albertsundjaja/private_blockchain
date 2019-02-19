@@ -7,6 +7,10 @@ const level = require('level');
 const chainDB = './chaindata';
 const db = level(chainDB);
 
+// error for star lookup
+const errAddrNotFound = {"error": "Address not found"};
+const errHashNotFound = {"error": "Hash not found"};
+
 
 /* ===== Block Class ==============================
 |  Class with a constructor for block 			   |
@@ -90,6 +94,46 @@ class Blockchain {
                 } else {
                     resolve(JSON.parse(val));
                 }
+            })
+        });
+    }
+
+    // get block with star address
+    getBlockStarAddress(address) {
+        let listStar = [];
+        return new Promise((resolve, reject) => {
+            db.createReadStream().on('data', (data) => {
+                let jsonValue = JSON.parse(data.value);
+                // check if key exist, then check if address is the required one, if it is add into list
+                if (jsonValue.body.hasOwnProperty('address')) {
+                    if (jsonValue.body.address === address) {
+                        listStar.push(jsonValue);
+                    }
+                }
+            }).on('error', (err) => {
+                reject(err);
+            }).on('close', () => {
+                if (listStar.length === 0) {
+                    reject(errAddrNotFound);
+                } else {
+                    resolve(listStar);
+                }
+            })
+        });
+    }
+
+    // get block with star hash
+    getBlockStarHash(hash) {
+        return new Promise((resolve, reject) => {
+            db.createReadStream().on('data', (data) => {
+                let jsonValue = JSON.parse(data.value);
+                if (jsonValue.hash === hash) {
+                    resolve(jsonValue);
+                }
+            }).on('error', (err) => {
+                reject(err);
+            }).on('close', () => {
+                reject(errHashNotFound);
             })
         });
     }
@@ -216,5 +260,7 @@ function addLevelDBData(key, value) {
 
 module.exports = {
     Block: Block,
-    Blockchain: Blockchain
+    Blockchain: Blockchain,
+    errAddrNotFound: errAddrNotFound,
+    errHashNotFound: errHashNotFound
 };
