@@ -7,9 +7,9 @@ const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended:true}));
 
-app.get('/block/:uid', handler.HandlerBlock_GET);
+app.get('/block_test/:uid', handler.HandlerBlock_GET);
 
-app.post('/block', handler.HandlerBlock_POST);
+app.post('/block_test', handler.HandlerBlock_POST);
 
 app.post('/requestValidation', handler.HandlerValidationRequest_POST);
 

@@ -226,9 +226,17 @@ HandlerStarBlock_POST = (req, res) => {
         return;
     }
 
-
-
-
+    const newBlock = new myChain.Block(reqBody);
+    blockchain.addBlock(newBlock)
+        .then((addedBlock) => {
+            res.status(200);
+            res.json(addedBlock);
+        })
+        .catch((err) => {
+            console.log(err);
+            res.status(500);
+            res.json(internalErr);
+        })
 
 };
 
@@ -239,3 +247,7 @@ module.exports = {
     HandlerValidateSignature_POST: HandlerValidateSignature_POST,
     HandlerStarBlock_POST: HandlerStarBlock_POST
 };
+
+// when address has been validated, should validation window reset?
+// when submitting star, can a user submit unlimited number of stars after being validated?
+// should the validation window be checked when user submit the star?
