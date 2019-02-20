@@ -5,27 +5,12 @@ class AddressRequest {
     constructor() {
         this.address = "";
         this.requestTimestamp = 0;
-    }
-
-    calculateValidationWindow() {
-        // calculate validation window time left
-        let validationWindow = Math.round((this.requestTimestamp + validationWindowTime) - (Date.now() / 1000));
-        if (validationWindow >= 0) {
-            return validationWindow;
-        } else {
-            return -1;
-        }
-    }
-}
-
-class ValidRequest {
-    constructor() {
         this.status = {
             address: "",
             requestTimestamp: 0,
             message: "",
             validationWindow: validationWindowTime,
-            messageSignature: true
+            messageSignature: false
         }
     }
 
@@ -49,14 +34,14 @@ class MemPool {
     getRequest(address) {
         // return the address and timestamp of unvalidated pool
 
-        let req = this.pool.find((reqItem) => reqItem.address === address);
+        let req = this.pool.find((reqItem) => reqItem.status.address === address);
         return req;
     }
 
     deleteRequest(address) {
         // delete the address request of unvalidated pool
 
-        let idx = this.pool.findIndex((reqItem) => reqItem.address === address);
+        let idx = this.pool.findIndex((reqItem) => reqItem.status.address === address);
         this.pool.splice(idx, 1);
     }
 
@@ -78,6 +63,5 @@ class MemPool {
 module.exports = {
     VALIDATION_TIME: validationWindowTime,
     MemPool: MemPool,
-    AddressRequest: AddressRequest,
-    ValidRequest: ValidRequest
+    AddressRequest: AddressRequest
 };

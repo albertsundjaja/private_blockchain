@@ -3,6 +3,7 @@ const levelDb = require('level');
 const blockchain = new myChain.Blockchain();
 const mempool = require('./mempool');
 const bitcoinMessage = require('bitcoinjs-message');
+const hex2ascii = require('hex2ascii');
 
 const paramErr = {
     error:"Parameter error"
@@ -92,9 +93,9 @@ HandlerValidationRequest_POST = (req, res) => {
         if (validationWindow !== -1) {
             res.status(409);
             res.json({
-                "walletAddress": existingReq.address,
-                "requestTimeStamp": existingReq.requestTimestamp,
-                "message": existingReq.address + ":" + existingReq.requestTimestamp.toString() + ":" + "starRegistry",
+                "walletAddress": existingReq.status.address,
+                "requestTimeStamp": existingReq.status.requestTimestamp,
+                "message": existingReq.status.address + ":" + existingReq.status.requestTimestamp.toString() + ":" + "starRegistry",
                 "validationWindow": validationWindow
             });
             return;
@@ -103,8 +104,8 @@ HandlerValidationRequest_POST = (req, res) => {
 
     // create a temp request
     let addressReq = new mempool.AddressRequest();
-    addressReq.address = address;
-    addressReq.requestTimestamp = Math.round(Date.now() / 1000);
+    addressReq.status.address = address;
+    addressReq.status.requestTimestamp = Math.round(Date.now() / 1000);
 
     // add to mempool
     memPool.pool.push(addressReq);
@@ -117,8 +118,8 @@ HandlerValidationRequest_POST = (req, res) => {
 
     res.json({
         "walletAddress": address,
-        "requestTimeStamp": addressReq.requestTimestamp,
-        "message": address + ":" + addressReq.requestTimestamp.toString() + ":" + "starRegistry",
+        "requestTimeStamp": addressReq.status.requestTimestamp,
+        "message": address + ":" + addressReq.status.requestTimestamp.toString() + ":" + "starRegistry",
         "validationWindow": mempool.VALIDATION_TIME
     });
 
@@ -169,7 +170,7 @@ HandlerValidateSignature_POST = (req, res) => {
     // check for signature
     const signature = reqBody.signature;
     const addressReq = memPool.getRequest(address);
-    const message = addressReq.address + ":" + addressReq.requestTimestamp.toString() + ":" + "starRegistry";
+    const message = address + ":" + addressReq.status.requestTimestamp.toString() + ":" + "starRegistry";
     let isValid = bitcoinMessage.verify(message, address, signature);
     if (!isValid) {
         res.status(401);
@@ -177,25 +178,23 @@ HandlerValidateSignature_POST = (req, res) => {
         return;
     }
 
-    // create new valid request and store in valid pool then remove from the unvalidated pool
-    let validReq = new mempool.ValidRequest();
-    validReq.status.address = address;
-    validReq.status.requestTimestamp = Math.round(Date.now() / 1000);
-    validReq.status.message = address + ":" +  validReq.status.requestTimestamp.toString() + ":" + "starRegistry";
-    memPool.validPool.push(validReq);
+    // store in valid pool then remove from the unvalidated pool
+    addressReq.status.message = message;
+    addressReq.status.validationWindow = addressReq.calculateValidationWindow();
+    addressReq.status.messageSignature = true;
+    memPool.validPool.push(addressReq);
     memPool.deleteRequest(address);
 
     res.status(200);
     res.json({
         "registerStar": true,
-        "status": validReq.status
+        "status": addressReq.status
     });
 
-    // add to timeouts, validation_time is in seconds
+    // set timeouts to remaining validation window, validation_time is in seconds
     setTimeout(function(){
         memPool.deleteValidRequest(address)
-    }, mempool.VALIDATION_TIME * 1000);
-
+    }, addressReq.status.calculateValidationWindow() * 1000);
 };
 
 HandlerStarBlock_POST = (req, res) => {
@@ -213,6 +212,21 @@ HandlerStarBlock_POST = (req, res) => {
     if (!reqBody.star) {
         res.status(400);
         res.json({"error":"Request require star"});
+        return;
+    }
+    if (!reqBody.star.dec) {
+        res.status(400);
+        res.json({"error":"Star require dec"});
+        return;
+    }
+    if (!reqBody.star.ra) {
+        res.status(400);
+        res.json({"error":"Star require ra"});
+        return;
+    }
+    if (!reqBody.star.story) {
+        res.status(400);
+        res.json({"error":"Star require story"});
         return;
     }
 
@@ -244,6 +258,7 @@ HandlerStarBlock_POST = (req, res) => {
     const newBlock = new myChain.Block(reqBody);
     blockchain.addBlock(newBlock)
         .then((addedBlock) => {
+            memPool.deleteValidRequest(address);
             res.status(200);
             res.json(addedBlock);
         })
@@ -313,6 +328,33 @@ HandlerStarLookupAddress_GET = (req, res) => {
         });
 };
 
+HandlerStarBlock_GET = (req, res) => {
+    const blockId = req.params.height;
+    if (!blockId) {
+        res.status(400);
+        res.json(paramErr);
+        return;
+    }
+
+    blockchain.getBlock(parseInt(blockId))
+        .then((block) => {
+            block.body.star.storyDecoded = hex2ascii(block.body.star.story);
+            res.status(200);
+            res.json(block);
+        })
+        .catch( (err)=> {
+            console.log(err);
+            if (err.notFound) {
+                res.status(404);
+                res.json(notFoundErr);
+            } else {
+                res.status(500);
+                res.json(internalErr);
+            }
+
+        });
+};
+
 module.exports = {
     HandlerBlock_GET: HandlerBlock_GET,
     HandlerBlock_POST: HandlerBlock_POST,
@@ -320,9 +362,6 @@ module.exports = {
     HandlerValidateSignature_POST: HandlerValidateSignature_POST,
     HandlerStarBlock_POST: HandlerStarBlock_POST,
     HandlerStarLookupHash_GET: HandlerStarLookupHash_GET,
-    HandlerStarLookupAddress_GET: HandlerStarLookupAddress_GET
+    HandlerStarLookupAddress_GET: HandlerStarLookupAddress_GET,
+    HandlerStarBlock_GET: HandlerStarBlock_GET
 };
-
-// when address has been validated, should validation window reset?
-// when submitting star, can a user submit unlimited number of stars after being validated?
-// should the validation window be checked when user submit the star?

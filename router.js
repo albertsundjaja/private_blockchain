@@ -21,7 +21,7 @@ app.get('/stars/address:address', handler.HandlerStarLookupAddress_GET);
 
 app.get('/stars/hash:hash', handler.HandlerStarLookupHash_GET);
 
-app.get('/block/:height', handler.HandlerBlock_GET);
+app.get('/block/:height', handler.HandlerStarBlock_GET);
 
 app.listen(8000, () => console.log('Example app listening on port 8000!'));
 
