@@ -226,6 +226,21 @@ HandlerStarBlock_POST = (req, res) => {
         return;
     }
 
+    // check story is 250 words / 500 chars(bytes) and encode
+    const story = reqBody.star.story;
+    if (story.split(" ").length > 250) {
+        res.status(409);
+        res.json({"error": "Story must not exceed 250 words"});
+        return;
+    }
+    if (story.split("").length > 500) {
+        res.status(409);
+        res.json({"error": "Story must not exceed 500 bytes"});
+        return;
+    }
+
+    reqBody.star.story = Buffer(story).toString('hex');
+
     const newBlock = new myChain.Block(reqBody);
     blockchain.addBlock(newBlock)
         .then((addedBlock) => {

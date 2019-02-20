@@ -6,6 +6,7 @@ const SHA256 = require('crypto-js/sha256');
 const level = require('level');
 const chainDB = './chaindata';
 const db = level(chainDB);
+const hex2ascii = require('hex2ascii');
 
 // error for star lookup
 const errAddrNotFound = {"error": "Address not found"};
@@ -107,6 +108,7 @@ class Blockchain {
                 // check if key exist, then check if address is the required one, if it is add into list
                 if (jsonValue.body.hasOwnProperty('address')) {
                     if (jsonValue.body.address === address) {
+                        jsonValue.body.star.storyDecoded = hex2ascii(jsonValue.body.star.story);
                         listStar.push(jsonValue);
                     }
                 }
@@ -128,6 +130,7 @@ class Blockchain {
             db.createReadStream().on('data', (data) => {
                 let jsonValue = JSON.parse(data.value);
                 if (jsonValue.hash === hash) {
+                    jsonValue.body.star.storyDecoded = hex2ascii(jsonValue.body.star.story);
                     resolve(jsonValue);
                 }
             }).on('error', (err) => {
