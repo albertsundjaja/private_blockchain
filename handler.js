@@ -17,7 +17,7 @@ const internalErr = {
 const memPool = new mempool.MemPool();
 
 HandlerBlock_GET = (req, res) => {
-    const blockId = req.params.uid;
+    const blockId = req.params.height;
     if (!blockId) {
         res.status(400);
         res.json(paramErr);
